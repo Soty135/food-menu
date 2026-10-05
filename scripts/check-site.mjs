@@ -171,9 +171,22 @@ async function settle() {
   await tick();
 }
 
-await settle();
+// Wait for a condition instead of a fixed delay: over the network the manifest
+// fetch can take longer than any reasonable sleep, and asserting too early
+// reports an empty deck as a site failure.
+async function waitFor(label, predicate, timeoutMs = 20000) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    if (predicate()) return true;
+    await settle();
+  }
+  fail.push(`${label} (timed out after ${timeoutMs}ms)`);
+  return false;
+}
 
-check("deck populated on load", kids().length >= N, `${kids().length} nodes`);
+const bootReady = await waitFor("deck populated on boot", () => kids().length > 0);
+
+check("deck populated on boot", bootReady && kids().length >= N, `${kids().length} nodes`);
 check("virtual window contiguous", contiguous(virtuals()), virtuals().join(","));
 check("status hidden after load", document.getElementById("status").hidden === true);
 check("no error shown to user", !document.getElementById("status").className.includes("error"));
