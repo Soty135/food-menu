@@ -1,0 +1,274 @@
+:root {
+  --bg: #0b0b0c;
+  --bg-soft: #161618;
+  --ink: #f4f4f5;
+  --muted: #a1a1aa;
+  --page-width: 900px;
+  --gutter: clamp(0.75rem, 3vw, 2rem);
+  --fab-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  --ar: 0.707035;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  /* Room so the floating button never covers the last page. */
+  padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+  overscroll-behavior-y: none;
+}
+
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 60;
+  padding: 0.75rem 1rem;
+  background: var(--ink);
+  color: var(--bg);
+  border-radius: 0 0 0.5rem 0;
+  font-weight: 600;
+}
+
+.skip-link:focus {
+  left: 0;
+}
+
+/* ---------- deck ---------- */
+
+.deck {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(0.5rem, 2vw, 1.25rem);
+  padding: clamp(0.5rem, 2vw, 1.5rem) var(--gutter) 0;
+}
+
+.page {
+  position: relative;
+  width: 100%;
+  max-width: var(--page-width);
+  margin: 0;
+  aspect-ratio: var(--ar);
+  border-radius: 0.375rem;
+  overflow: hidden;
+  background: var(--bg-soft);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.5), 0 12px 32px -12px rgb(0 0 0 / 0.7);
+  /* Promote the tap target without heavy layout cost. */
+  contain: layout paint;
+}
+
+.page img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.28s ease;
+  /* The blurred placeholder is painted as a background on the img itself. */
+  background-size: cover;
+  background-position: center;
+  cursor: zoom-in;
+}
+
+.page img.is-loaded {
+  opacity: 1;
+}
+
+.deck--noscript {
+  gap: 1.25rem;
+}
+
+.deck--noscript .page img {
+  opacity: 1;
+  transition: none;
+}
+
+/* ---------- status ---------- */
+
+.status {
+  margin: 0;
+  padding: 2rem 1rem;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.status[hidden] {
+  display: none;
+}
+
+.status--error {
+  color: #fca5a5;
+}
+
+/* ---------- call button ---------- */
+
+.call-fab {
+  position: fixed;
+  left: 50%;
+  bottom: var(--fab-bottom);
+  z-index: 40;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.85rem 1.4rem;
+  border-radius: 999px;
+  background: var(--ink);
+  color: #0b0b0c;
+  font-size: 1rem;
+  font-weight: 650;
+  text-decoration: none;
+  white-space: nowrap;
+  box-shadow: 0 6px 20px -6px rgb(0 0 0 / 0.65), 0 2px 6px rgb(0 0 0 / 0.4);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.call-fab:hover {
+  transform: translateX(-50%) translateY(-1px);
+}
+
+.call-fab:active {
+  transform: translateX(-50%) scale(0.97);
+}
+
+.call-fab:focus-visible {
+  outline: 3px solid #38bdf8;
+  outline-offset: 3px;
+}
+
+.call-fab__icon {
+  width: 1.15em;
+  height: 1.15em;
+  fill: currentColor;
+  flex: none;
+}
+
+.call-fab--inline {
+  position: static;
+  transform: none;
+  margin: 0.5rem 0 1.5rem;
+}
+
+.call-fab--inline:hover,
+.call-fab--inline:active {
+  transform: none;
+}
+
+/* ---------- lightbox ---------- */
+
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: flex;
+  flex-direction: column;
+  background: rgb(6 6 7 / 0.97);
+  backdrop-filter: blur(6px);
+  animation: fade 0.16s ease;
+}
+
+.lightbox[hidden] {
+  display: none;
+}
+
+@keyframes fade {
+  from { opacity: 0; }
+}
+
+.lightbox__stage {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  /* We handle all panning ourselves. */
+  touch-action: none;
+  overscroll-behavior: contain;
+}
+
+.lightbox__stage img {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  transform-origin: center center;
+  will-change: transform;
+  background: var(--bg-soft);
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.lightbox__close {
+  position: absolute;
+  top: calc(0.75rem + env(safe-area-inset-top, 0px));
+  right: 0.75rem;
+  z-index: 2;
+  width: 2.75rem;
+  height: 2.75rem;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.12);
+  color: #fff;
+  cursor: pointer;
+}
+
+.lightbox__close svg {
+  width: 1.4rem;
+  height: 1.4rem;
+}
+
+.lightbox__close:hover {
+  background: rgb(255 255 255 / 0.22);
+}
+
+.lightbox__close:focus-visible {
+  outline: 3px solid #38bdf8;
+  outline-offset: 2px;
+}
+
+.lightbox__hint {
+  margin: 0;
+  padding: 0.75rem 1rem calc(0.9rem + env(safe-area-inset-bottom, 0px));
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.85rem;
+  pointer-events: none;
+}
+
+/* ---------- motion / print ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .page img,
+  .call-fab,
+  .lightbox {
+    transition: none;
+    animation: none;
+  }
+}
+
+@media print {
+  body {
+    background: #fff;
+    padding: 0;
+  }
+
+  .call-fab,
+  .lightbox,
+  .skip-link,
+  .status {
+    display: none !important;
+  }
+}

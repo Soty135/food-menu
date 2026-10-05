@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0b0c">
+<meta name="description" content="Davels Kitchen food menu. Scroll to browse, tap any page to zoom.">
+<meta property="og:title" content="Davels Kitchen - Food Menu">
+<meta property="og:description" content="Browse the Davels Kitchen menu. Tap any page to zoom in.">
+<meta property="og:type" content="website">
+<title>Davels Kitchen - Food Menu</title>
+<link rel="stylesheet" href="assets/styles.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230b0b0c'/%3E%3Ctext x='16' y='23' font-family='Georgia,serif' font-size='19' fill='%23fff' text-anchor='middle'%3ED%3C/text%3E%3C/svg%3E">
+</head>
+<body>
+
+<a class="skip-link" href="#deck">Skip to menu</a>
+
+<main id="deck" class="deck" aria-label="Menu pages"></main>
+
+<p id="status" class="status" role="status" aria-live="polite">Loading menu&hellip;</p>
+
+<a class="call-fab" href="tel:+2817605675">
+  <svg class="call-fab__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    <path d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.24 11.4 11.4 0 0 0 3.6.58 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1 11.4 11.4 0 0 0 .58 3.6 1 1 0 0 1-.25 1z"/>
+  </svg>
+  <span>Call to order</span>
+</a>
+
+<div id="lightbox" class="lightbox" hidden>
+  <button type="button" class="lightbox__close" aria-label="Close zoomed page">
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+  </button>
+  <div class="lightbox__stage" id="lightbox-stage">
+    <img id="lightbox-img" alt="">
+  </div>
+  <p class="lightbox__hint" id="lightbox-hint">Pinch or double-tap to zoom &middot; swipe to pan</p>
+</div>
+
+<noscript>
+  <div class="deck deck--noscript">
+    <figure class="page" style="--ar:0.707035">
+      <img src="assets/pages/page-01.lg.webp" width="1191" height="1685" alt="Menu page 1" style="background-image:url(assets/pages/page-01.sm.webp)">
+    </figure>
+    <figure class="page" style="--ar:0.707035">
+      <img src="assets/pages/page-02.lg.webp" width="1191" height="1685" alt="Menu page 2" loading="lazy" style="background-image:url(assets/pages/page-02.sm.webp)">
+    </figure>
+    <figure class="page" style="--ar:0.707035">
+      <img src="assets/pages/page-03.lg.webp" width="1191" height="1685" alt="Menu page 3" loading="lazy" style="background-image:url(assets/pages/page-03.sm.webp)">
+    </figure>
+    <figure class="page" style="--ar:0.707035">
+      <img src="assets/pages/page-04.lg.webp" width="1191" height="1685" alt="Menu page 4" loading="lazy" style="background-image:url(assets/pages/page-04.sm.webp)">
+    </figure>
+    <figure class="page" style="--ar:0.707035">
+      <img src="assets/pages/page-05.lg.webp" width="1191" height="1685" alt="Menu page 5" loading="lazy" style="background-image:url(assets/pages/page-05.sm.webp)">
+    </figure>
+    <figure class="page" style="--ar:0.707035">
+      <img src="assets/pages/page-06.lg.webp" width="1191" height="1685" alt="Menu page 6" loading="lazy" style="background-image:url(assets/pages/page-06.sm.webp)">
+    </figure>
+    <figure class="page" style="--ar:0.707035">
+      <img src="assets/pages/page-07.lg.webp" width="1191" height="1685" alt="Menu page 7" loading="lazy" style="background-image:url(assets/pages/page-07.sm.webp)">
+    </figure>
+    <figure class="page" style="--ar:0.707035">
+      <img src="assets/pages/page-08.lg.webp" width="1191" height="1685" alt="Menu page 8" loading="lazy" style="background-image:url(assets/pages/page-08.sm.webp)">
+    </figure>
+    <figure class="page" style="--ar:0.707035">
+      <img src="assets/pages/page-09.lg.webp" width="1191" height="1685" alt="Menu page 9" loading="lazy" style="background-image:url(assets/pages/page-09.sm.webp)">
+    </figure>
+    <figure class="page" style="--ar:0.707035">
+      <img src="assets/pages/page-10.lg.webp" width="1191" height="1685" alt="Menu page 10" loading="lazy" style="background-image:url(assets/pages/page-10.sm.webp)">
+    </figure>
+    <figure class="page" style="--ar:0.707035">
+      <img src="assets/pages/page-11.lg.webp" width="1191" height="1685" alt="Menu page 11" loading="lazy" style="background-image:url(assets/pages/page-11.sm.webp)">
+    </figure>
+    <a class="call-fab call-fab--inline" href="tel:+2817605675">Call to order &middot; +281-760-5675</a>
+  </div>
+</noscript>
+
+<script src="assets/app.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+*.pdf
+scripts/__pycache__/
+.vercel
+node_modules/
+.DS_Store
+Thumbs.db
+*.log
