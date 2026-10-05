@@ -7,7 +7,7 @@ Run from the project root:
 Produces:
     assets/pages/page-01.sm.webp   (144 dpi, phone)
     assets/pages/page-01.lg.webp   (216 dpi, retina / zoom)
-    assets/pages/manifest.json     (count, dimensions, alt text, placeholders)
+    assets/menu.json              (count, dimensions, alt text, placeholders)
 """
 
 import base64
@@ -146,7 +146,11 @@ def main():
     }
     verify_paths(pages)
 
-    manifest_path = OUT_DIR / "manifest.json"
+    # Written outside assets/pages/ on purpose. vercel.json serves that whole
+    # directory as immutable for a year, which is right for the images because
+    # their filenames are fixed, but it would pin this manifest too and stop a
+    # re-rendered menu from ever reaching a returning visitor.
+    manifest_path = ROOT / "assets" / "menu.json"
     manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
 
     print(f"\n  {doc.page_count} pages -> {OUT_DIR}")

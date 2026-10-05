@@ -313,7 +313,11 @@
   /* boot                                                                 */
   /* ------------------------------------------------------------------ */
 
-  fetch("assets/pages/manifest.json")
+  // The manifest deliberately lives outside assets/pages/. vercel.json marks
+  // everything in there as immutable for a year, and a manifest that stale pins
+  // the paths it lists -- so a corrected menu could never reach anyone who had
+  // cached the old one. Do not move this back into assets/pages/.
+  fetch("assets/menu.json")
     .then(function (response) {
       if (!response.ok) throw new Error("manifest " + response.status);
       return response.json();

@@ -26,7 +26,7 @@ import { JSDOM, VirtualConsole } from "jsdom";
 const ORIGIN = process.env.ORIGIN ?? "http://127.0.0.1:8123";
 const H = 1000; // pretend every page is 1000px tall; jsdom has no layout
 const BOTTOM_PAD = 88; // body padding-bottom reserving room for the FAB
-const MANIFEST = JSON.parse(fs.readFileSync("assets/pages/manifest.json", "utf8"));
+const MANIFEST = JSON.parse(fs.readFileSync("assets/menu.json", "utf8"));
 const N = MANIFEST.pageCount;
 
 // app.js reads scrollHeight to decide the reader has hit the end. jsdom has
@@ -43,6 +43,22 @@ let passed = 0;
 const check = (label, cond, detail = "") => {
   if (cond) passed++;
   else fail.push(`${label}${detail ? ` ${detail}` : ""}`);
+};
+
+// Print the tally and the failures, then set the exit code. Shared so an
+// early abort still reports instead of dying on an unrelated TypeError.
+const report = (extra = {}) => {
+  console.log(`\npages in menu: ${N}`);
+  console.log(`distinct pages visited: ${seen.size}`);
+  console.log(`DOM nodes after full scroll: ${kids().length}`);
+  console.log(`checks passed: ${passed}`);
+  for (const [k, v] of Object.entries(extra)) console.log(`${k}: ${v}`);
+  if (fail.length) {
+    console.error(`\nFAILED (${fail.length}):`);
+    for (const f of fail) console.error("  -", f);
+  }
+  if (window) window.close();
+  process.exit(fail.length ? 1 : 0);
 };
 
 // --- 1. every asset the manifest names must actually be served -------------
@@ -85,6 +101,28 @@ for (const page of MANIFEST.pages) {
 const html = await (await fetch(`${ORIGIN}/index.html`)).text();
 check("index.html has no noscript page markup", !/page-\d\d\.(sm|lg)\.webp/.test(html));
 check("index.html keeps a noscript fallback", html.includes("<noscript>"));
+
+// app.js fetches the manifest at runtime, so a bad path or a caching policy
+// that hides a correction takes the whole menu down silently. This file was once
+// served immutable for a year while naming image paths that 404'd, and every
+// page then sat at opacity 0 with no error on screen.
+const menuRes = await fetch(`${ORIGIN}/assets/menu.json`);
+check("manifest is reachable over HTTP", menuRes.ok, `status=${menuRes.status}`);
+const menu = await menuRes.json().catch(() => null);
+check("manifest parses as JSON", menu !== null);
+check("manifest lists every page", menu?.pageCount === N, `pageCount=${menu?.pageCount} expected=${N}`);
+
+const menuCC = String(menuRes.headers.get("cache-control") ?? "");
+// Only enforced against a real host, since the local static server sets none.
+if (menuCC) {
+  check("manifest is never cached immutably", !/immutable/i.test(menuCC), `cache-control="${menuCC}"`);
+}
+
+check(
+  "manifest names images relative to the site root",
+  MANIFEST.pages.every((p) => p.small.startsWith("assets/pages/") && p.large.startsWith("assets/pages/")),
+  MANIFEST.pages[0].small
+);
 
 // --- 2. drive the page ------------------------------------------------------
 const layout = { scrollY: 0 };
@@ -164,6 +202,8 @@ const tick = () => new Promise((r) => setTimeout(r, 40));
 const kids = () => [...deck.children];
 const indices = () => kids().map((k) => Number(k.dataset.index));
 const counterText = () => document.getElementById("page-counter").textContent;
+// Declared here rather than beside the first use so the abort path can report.
+const seen = new Set();
 
 // The deck is exactly the menu: pages 1..N, in order, and never changing.
 const inOrder = (list) => list.every((v, i) => v === i + 1);
@@ -200,6 +240,10 @@ async function waitFor(label, predicate, timeoutMs = 20000) {
 }
 
 const bootReady = await waitFor("deck populated on boot", () => kids().length > 0);
+// The deck is appended before onScroll paints the counter, so a populated deck
+// can still be one frame behind. Asserting early made this check flaky.
+await settle();
+await settle();
 
 check("deck populated on boot", bootReady && kids().length === N, `${kids().length} nodes`);
 check("pages are 1..N in document order", inOrder(indices()), indices().join(","));
@@ -208,6 +252,14 @@ check("no error shown to user", !document.getElementById("status").className.inc
 check("page counter revealed after boot", document.getElementById("page-counter").hidden === false);
 check("end-of-menu footer revealed", document.getElementById("deck-end").hidden === false);
 check("counter seeded on page 1", counterText() === `Page 1 of ${N}`, counterText());
+
+// Everything below this point drives the deck. If boot never happened there is
+// nothing to drive, and dereferencing it used to abort with a raw stack trace
+// instead of reporting -- which is a poor way to learn that a deploy broke the
+// menu, and the whole reason this suite exists.
+if (!bootReady || kids().length !== N) {
+  report({ boot: "failed, skipped the interaction checks" });
+}
 
 // Nothing is spliced above page 1 any more, so the reader starts on it.
 check("page 1 under centre after boot", centrePage() === 1, `got ${centrePage()}`);
@@ -249,7 +301,7 @@ async function swipe(dy, label) {
   return { before, after: centrePage() };
 }
 
-const seen = new Set([centrePage()]);
+seen.add(centrePage());
 for (let i = 1; i < N; i++) {
   const { before, after } = await swipe(H, `down ${i}`);
   check(`down ${i}: advanced exactly one page`, after === before + 1, `${before} -> ${after}`);
@@ -338,16 +390,6 @@ check("scroll lock released", document.documentElement.style.overflow === "");
 // --- 4. nothing threw ------------------------------------------------------
 check("no console errors during the run", consoleErrors.length === 0, consoleErrors.join(" | "));
 
-console.log(`\npages in menu: ${N}`);
-console.log(`distinct pages visited: ${seen.size}`);
-console.log(`DOM nodes after full scroll: ${kids().length}`);
-console.log(`checks passed: ${passed}`);
+report();
 
-if (fail.length) {
-  console.error(`\nFAILED (${fail.length}):`);
-  for (const f of fail) console.error("  -", f);
-  window.close();
-  process.exit(1);
-}
-console.log("\nAll asset, scroll, wrap and lightbox checks passed.");
-window.close();
+if (!fail.length) console.log("\nAll asset, scroll, wrap and lightbox checks passed.");

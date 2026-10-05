@@ -92,6 +92,25 @@ GitHub repo, so pushing to `main` redeploys automatically.
 Once you have the final URL, generate a QR code pointing at
 `https://dabels-menu.vercel.app` and print it for the table cards.
 
+### Caching, and what not to cache
+
+`vercel.json` serves `assets/pages/` as `immutable` for a year. That is safe
+for the images and only for the images: their filenames are fixed, so a given
+URL always means the same bytes.
+
+`assets/menu.json` is the exception and is deliberately **not** in that
+directory. It lists the image paths, so a manifest cached too long stops a
+corrected menu from reaching anyone. This is not hypothetical — `vercel.json`
+once cached `assets/pages/manifest.json` for a year, and a manifest published
+with image paths missing the `assets/` prefix was pinned in browsers and at the
+edge. Every image then 404'd, `app.js` had no `error` handler, and every page sat
+at `opacity: 0`: a permanently blank menu with no error on screen. The
+pre-commit before it worked, which is what made it so confusing to diagnose.
+
+Two rules keep that from recurring. Never put a file whose contents can change
+behind the `immutable` rule, and never let an image reach `opacity: 0` without
+an `error` path that reveals it anyway.
+
 ## Local preview
 
 Any static file server works, but fetch the manifest over HTTP rather than
@@ -112,7 +131,8 @@ python -m http.server 8000 --bind 0.0.0.0
 
 | Piece | File | Role |
 | --- | --- | --- |
-| Pages | `assets/pages/` | WebP per page at 144 and 216 dpi, plus `manifest.json` |
+| Pages | `assets/pages/` | WebP per page at 144 and 216 dpi |
+| Manifest | `assets/menu.json` | Page count, dimensions, alt text, placeholders |
 | Shell | `index.html` | Page container, call button, counter, end-of-menu footer, lightbox markup |
 | Styles | `assets/styles.css` | Layout, fit-to-width pages, button, overlay |
 | Behaviour | `assets/app.js` | Lazy loading, end-of-menu wrap, zoom |
