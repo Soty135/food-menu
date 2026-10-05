@@ -44,10 +44,37 @@ carries a valid WebP body, then drives the page through every page asserting
 the deck holds exactly 11 figures and never changes size, that scrolling runs
 1..11 without jumps and stops cleanly at both ends, that the bottom wraps back
 to page 1 and then respects its cooldown, and that the lightbox opens and
-closes. jsdom has no layout engine, so the harness synthesises page geometry,
-scroll clamping and document height itself — without those the wrap
-assertions would pass without proving anything. Set `ORIGIN` to point it at a
-deployed URL instead.
+closes. jsdom has no layout engine, so it synthesises page geometry, scroll
+clamping and document height itself — without a clamped `scrollHeight` the
+wrap assertions would pass without proving anything.
+
+## Verifying in a real browser
+
+```
+python -m http.server 8123 --bind 127.0.0.1
+node scripts/check-browser.mjs
+```
+
+`check-site.mjs` runs in jsdom, which has no rendering engine and therefore
+cannot tell you whether a page is *visible*. That gap is not hypothetical: the
+menu once loaded images from an `IntersectionObserver` callback, the jsdom suite
+stubbed that observer out, and the suite stayed green while a browser which
+never delivered the callback rendered an empty page. So anything that needs
+pixels lives in this script instead.
+
+It drives Chrome or Edge over the DevTools protocol (no npm dependencies —
+Node's global `fetch` and `WebSocket`) and asserts that images actually decode
+(`naturalWidth > 0`) and are not stuck at `opacity: 0`, that they decode as you
+scroll, that the wrap works, and that the console stays clean. Set `CHROME_PATH`
+if the browser is somewhere unusual, or `ORIGIN` to point at a deployed URL.
+
+Do not verify this site with `chrome --headless --dump-dom` or
+`--screenshot`. Both imply `--virtual-time-budget`, which skips the rendering
+lifecycle, so `IntersectionObserver` never fires and lazy loading never runs.
+That combination reports a completely blank menu for a site that renders
+perfectly in front of a person.
+
+Set `ORIGIN` on either script to check a deployed URL instead.
 
 ## Deploying
 
@@ -95,6 +122,14 @@ The deck is exactly the menu: 11 figures rendered once, numbered 1..11 by
 which is what keeps the scroll smooth — an earlier version kept a sliding
 window of pages and corrected `scrollTop` by the height it had inserted, and
 that fought the browser's own scroll anchoring and made the page judder.
+
+Images use native `loading="lazy"` with `src` attached as the figure is built,
+so the browser defers the fetch without any JavaScript having to notice. An
+earlier version attached sources from an `IntersectionObserver` callback,
+which made a page invisible if that callback never arrived and left no error
+to explain the blank page. The blurred placeholder is painted on the figure
+rather than the image, because the image is transparent until it has loaded,
+and a `load` *or* `error` event reveals it so a 404 cannot leave a blank box.
 
 The only scroll handler updates the "Page X of 11" counter and, when the
 reader reaches the bottom, jumps back to the top. That jump is instant rather

@@ -4,6 +4,7 @@
 //     missing before, which is why a 404 shipped to production)
 //   - every image 200s with Content-Type image/webp and a WebP body
 //   - the deck is exactly the menu: 11 pages, in order, and never spliced
+//   - every image has its source attached at boot, with no observer involved
 //   - scrolling runs 1..11 without jumps, and stops cleanly at both ends
 //   - reaching the bottom wraps back to page 1
 //   - the wrap cooldown blocks the momentum re-wrap that would bounce the page
@@ -105,34 +106,12 @@ const dom = await JSDOM.fromURL(`${ORIGIN}/index.html`, {
     // it requests must come off the wire, so a bad path cannot pass.
     window.fetch = (url, opts) => fetch(new URL(url, ORIGIN), opts);
 
-    // jsdom has no IntersectionObserver. Re-check observed figures against
-    // the fake layout every time the harness scrolls, so lazy loading is
-    // exercised across the whole menu and not just for the pages that happen
-    // to be on screen at boot.
-    const observed = [];
-    window.IntersectionObserver = class {
-      constructor(cb) {
-        this.cb = cb;
-      }
-      observe(el) {
-        observed.push({ cb: this.cb, el, done: false });
-      }
-      unobserve() {}
-      disconnect() {}
-    };
-    window.__flushIO = () => {
-      for (const entry of observed) {
-        if (entry.done) continue;
-        const siblings = entry.el.parentElement ? [...entry.el.parentElement.children] : [];
-        const idx = siblings.indexOf(entry.el);
-        if (idx < 0) continue;
-        const top = idx * H - layout.scrollY;
-        if (top < H * 1.5 && top + H > -H * 1.5) {
-          entry.done = true;
-          entry.cb([{ isIntersecting: true, target: entry.el }]);
-        }
-      }
-    };
+    // app.js now uses native loading="lazy" with src set up front, so there is no
+    // IntersectionObserver to fake. That is deliberate: the previous version
+    // drove loading from an observer, this file stubbed the observer out, and
+    // the result was a green suite that could not see a page which never
+    // loaded. Anything needing a real rendering engine lives in
+    // check-browser.mjs instead.
 
     // jsdom has no layout and reports a root scrollHeight of 0, which would
     // make app.js's atBottom() bail out and never wrap. Define it on
@@ -205,7 +184,6 @@ async function settle() {
   await tick();
   await new Promise((r) => window.requestAnimationFrame(() => r()));
   await tick();
-  window.__flushIO?.();
 }
 
 // Wait for a condition instead of a fixed delay: over the network the manifest
@@ -234,6 +212,29 @@ check("counter seeded on page 1", counterText() === `Page 1 of ${N}`, counterTex
 // Nothing is spliced above page 1 any more, so the reader starts on it.
 check("page 1 under centre after boot", centrePage() === 1, `got ${centrePage()}`);
 check("no headroom prepended above page 1", indices()[0] === 1, `first=${indices()[0]}`);
+
+// The regression that mattered: every image must have its source attached the
+// moment the figure exists, with no observer callback in between. If these can
+// ever be false, a browser that skips the callback renders a blank menu with
+// no error to show for it.
+const srcAtBoot = kids().filter((k) => {
+  const img = k.querySelector("img");
+  return img && img.getAttribute("src") && img.getAttribute("srcset");
+});
+check("every image has src at boot", srcAtBoot.length === N, `${srcAtBoot.length}/${N}`);
+check(
+  "every image is natively lazy",
+  kids().every((k) => k.querySelector("img").getAttribute("loading") === "lazy")
+);
+check(
+  "every page carries its blurred placeholder",
+  kids().every((k) => (k.style.backgroundImage || "").includes("data:image/webp"))
+);
+check(
+  "no page still depends on an observer",
+  kids().every((k) => k.dataset.observed === undefined),
+  kids().map((k) => k.dataset.observed).join(",")
+);
 
 // Scroll relatively, like a thumb, through every page in order.
 async function swipe(dy, label) {
@@ -266,17 +267,19 @@ for (let i = 1; i < N; i++) {
 check("scrolling up past page 1 stops at the top", layout.scrollY === 0, `scrollY=${layout.scrollY}`);
 check("reader is back on page 1", centrePage() === 1, `got ${centrePage()}`);
 
-// Every page passed the viewport, so lazy loading must have attached all of them.
-check("every page received a real image source", kids().every((k) => k.querySelector("img").src));
-
-// Each page must still point at its own file, with no modulo remapping.
+// Sources are attached at construction now, so nothing here depends on a
+// page having passed the viewport. Assert the mapping holds regardless.
 let mappingOk = true;
 for (const k of kids()) {
   const img = k.querySelector("img");
   const index = Number(k.dataset.index);
-  if (img.src && !img.src.includes(`${expectedFile(index)}.sm.webp`)) {
+  if (!img.src.includes(`${expectedFile(index)}.sm.webp`)) {
     mappingOk = false;
     fail.push(`page ${index} src is ${img.src}, expected ${expectedFile(index)}`);
+  }
+  if (!img.srcset.includes(`${expectedFile(index)}.lg.webp`)) {
+    mappingOk = false;
+    fail.push(`page ${index} srcset is missing the large variant`);
   }
 }
 check("each page maps to its own served file", mappingOk);

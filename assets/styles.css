@@ -62,6 +62,11 @@ body {
   border-radius: 0.375rem;
   overflow: hidden;
   background: var(--bg-soft);
+  /* The blurred placeholder is painted here rather than on the image: the
+     image is transparent until it loads, so a placeholder underneath it would
+     never be seen and the page would read as an empty grey box. */
+  background-size: cover;
+  background-position: center;
   box-shadow: 0 1px 2px rgb(0 0 0 / 0.5), 0 12px 32px -12px rgb(0 0 0 / 0.7);
   /* Promote the tap target without heavy layout cost. */
   contain: layout paint;
@@ -74,9 +79,6 @@ body {
   object-fit: cover;
   opacity: 0;
   transition: opacity 0.28s ease;
-  /* The blurred placeholder is painted as a background on the img itself. */
-  background-size: cover;
-  background-position: center;
   cursor: zoom-in;
 }
 

@@ -34,48 +34,38 @@
     var figure = document.createElement("figure");
     figure.className = "page";
     figure.dataset.index = String(index);
+    // The blurred placeholder sits on the figure rather than the image. The
+    // image starts at opacity 0 while it loads, so a placeholder underneath it
+    // would be hidden too and the page would read as an empty grey box.
+    figure.style.backgroundImage = 'url("' + data.placeholder + '")';
 
     var img = document.createElement("img");
     img.alt = data.alt;
     img.width = data.width;
     img.height = data.height;
     img.decoding = "async";
-    img.style.backgroundImage = 'url("' + data.placeholder + '")';
-    img.dataset.small = data.small;
-    img.dataset.large = data.large;
-    img.dataset.smallW = String(data.width);
-    img.dataset.largeW = String(data.largeWidth);
+    img.setAttribute("loading", "lazy");
     img.sizes = "(max-width: 900px) 100vw, 900px";
+    img.dataset.large = data.large;
 
-    img.addEventListener("load", function () {
+    // Sources are set up front and native lazy loading defers the fetch. This
+    // used to hang off an IntersectionObserver callback, which meant a browser
+    // that never delivered that callback left every page permanently invisible.
+    img.srcset =
+      data.small + " " + data.width + "w, " +
+      data.large + " " + data.largeWidth + "w";
+    img.src = data.small;
+
+    // Fade in once the pixels are there, but never stay invisible on failure:
+    // a 404 has to leave the placeholder showing, not a blank rectangle.
+    var reveal = function () {
       img.classList.add("is-loaded");
-    });
+    };
+    img.addEventListener("load", reveal);
+    img.addEventListener("error", reveal);
 
     figure.appendChild(img);
     return figure;
-  }
-
-  // Lazily attach real image sources only when a page nears the viewport.
-  var observer = new IntersectionObserver(
-    function (entries) {
-      entries.forEach(function (entry) {
-        if (!entry.isIntersecting) return;
-        var img = entry.target.querySelector("img");
-        loadImage(img);
-        observer.unobserve(entry.target);
-      });
-    },
-    // Enough headroom to have the next page decoded before it is needed, but
-    // not so much that every page decodes at once on a phone.
-    { rootMargin: "75% 0px", threshold: 0 }
-  );
-
-  function loadImage(img) {
-    if (!img || img.dataset.small === undefined) return;
-    img.srcset =
-      img.dataset.small + " " + img.dataset.smallW + "w, " +
-      img.dataset.large + " " + img.dataset.largeW + "w";
-    img.src = img.dataset.small;
   }
 
   /* ------------------------------------------------------------------ */
@@ -86,16 +76,6 @@
     var frag = document.createDocumentFragment();
     for (var i = from; i <= to; i++) frag.appendChild(createPage(i));
     return frag;
-  }
-
-  function observeNew() {
-    var kids = deck.children;
-    for (var i = 0; i < kids.length; i++) {
-      if (kids[i].dataset.observed !== "1") {
-        kids[i].dataset.observed = "1";
-        observer.observe(kids[i]);
-      }
-    }
   }
 
   // The page under the middle of the viewport is the one being read.
@@ -343,7 +323,6 @@
       document.documentElement.style.setProperty("--ar", data.aspectRatio);
 
       deck.appendChild(renderRange(1, data.pageCount));
-      observeNew();
 
       status.hidden = true;
       pageCounter.hidden = false;
