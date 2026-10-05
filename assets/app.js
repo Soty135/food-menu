@@ -1,39 +1,39 @@
 (function () {
   "use strict";
 
-  // How many pages to splice in at each edge, and how close to the edge
-  // the reader has to get before we do it.
-  var BATCH = 6;
-  var BUFFER = 4;
-  var MAX_CHILDREN = 36;
+  // The menu is a fixed run of pages. Reaching the last one sends the reader
+  // back to the top rather than stopping, so scrolling feels endless without
+  // the DOM having to be endless.
+  var WRAP_EPSILON = 2; // px past the end that still counts as "at the bottom"
+  var WRAP_COOLDOWN = 700; // ms
 
   var deck = document.getElementById("deck");
   var status = document.getElementById("status");
+  var pageCounter = document.getElementById("page-counter");
+  var deckEnd = document.getElementById("deck-end");
+  var backToTop = document.getElementById("back-to-top");
   var lightbox = document.getElementById("lightbox");
   var lightboxStage = document.getElementById("lightbox-stage");
   var lightboxImg = document.getElementById("lightbox-img");
   var lightboxClose = lightbox.querySelector(".lightbox__close");
 
   var manifest = null;
-  var firstVirtual = 1; // virtual page number of deck's first child
-  var lastVirtual = 1;
   var ticking = false;
+  var suppressWrapUntil = 0;
 
   /* ------------------------------------------------------------------ */
   /* page construction                                                    */
   /* ------------------------------------------------------------------ */
 
-  function pageData(virtualIndex) {
-    var n = manifest.pageCount;
-    var i = ((virtualIndex - 1) % n + n) % n;
-    return manifest.pages[i];
+  function pageData(index) {
+    return manifest.pages[index - 1];
   }
 
-  function createPage(virtualIndex) {
-    var data = pageData(virtualIndex);
+  function createPage(index) {
+    var data = pageData(index);
     var figure = document.createElement("figure");
     figure.className = "page";
-    figure.dataset.virtual = String(virtualIndex);
+    figure.dataset.index = String(index);
 
     var img = document.createElement("img");
     img.alt = data.alt;
@@ -65,7 +65,9 @@
         observer.unobserve(entry.target);
       });
     },
-    { rootMargin: "150% 0px", threshold: 0 }
+    // Enough headroom to have the next page decoded before it is needed, but
+    // not so much that every page decodes at once on a phone.
+    { rootMargin: "75% 0px", threshold: 0 }
   );
 
   function loadImage(img) {
@@ -77,62 +79,13 @@
   }
 
   /* ------------------------------------------------------------------ */
-  /* endless scroll                                                        */
+  /* page flow                                                            */
   /* ------------------------------------------------------------------ */
 
   function renderRange(from, to) {
     var frag = document.createDocumentFragment();
     for (var i = from; i <= to; i++) frag.appendChild(createPage(i));
     return frag;
-  }
-
-  function anchorVirtual() {
-    var mid = window.innerHeight / 2;
-    var kids = deck.children;
-    for (var i = 0; i < kids.length; i++) {
-      var rect = kids[i].getBoundingClientRect();
-      if (rect.top <= mid && rect.bottom >= mid) {
-        return Number(kids[i].dataset.virtual);
-      }
-    }
-    return firstVirtual;
-  }
-
-  function extend() {
-    var anchor = anchorVirtual();
-
-    if (anchor - firstVirtual < BUFFER) {
-      var from = firstVirtual - BATCH;
-      deck.insertBefore(renderRange(from, firstVirtual - 1), deck.firstChild);
-      firstVirtual = from;
-      // Content appeared above the viewport, so shift the reader's position
-      // down by exactly what we added to keep the same page on screen.
-      compensate(addHeight(deck, BATCH));
-    }
-
-    if (lastVirtual - anchor < BUFFER) {
-      var to = lastVirtual + BATCH;
-      deck.appendChild(renderRange(lastVirtual + 1, to));
-      lastVirtual = to;
-      observeNew();
-    }
-
-    trim(anchor);
-  }
-
-  // Measure the newly prepended pages. aspect-ratio reserves the height up
-  // front, so this works before any image data arrives.
-  function addHeight(container, count) {
-    var total = 0;
-    for (var i = 0; i < count; i++) {
-      var child = container.children[i];
-      if (child) total += child.offsetHeight;
-    }
-    return total;
-  }
-
-  function compensate(delta) {
-    if (delta > 0) window.scrollBy(0, delta);
   }
 
   function observeNew() {
@@ -145,23 +98,38 @@
     }
   }
 
-  function trim(anchor) {
-    while (deck.children.length > MAX_CHILDREN) {
-      var first = deck.firstElementChild;
-      var last = deck.lastElementChild;
-      var distTop = anchor - firstVirtual;
-      var distBottom = lastVirtual - anchor;
-
-      if (distTop >= distBottom) {
-        var h = first.offsetHeight;
-        first.remove();
-        firstVirtual++;
-        // Removing content above the viewport: pull the reader up to match.
-        window.scrollBy(0, -h);
-      } else {
-        last.remove();
-        lastVirtual--;
+  // The page under the middle of the viewport is the one being read.
+  function currentIndex() {
+    var mid = window.innerHeight / 2;
+    var kids = deck.children;
+    for (var i = 0; i < kids.length; i++) {
+      var rect = kids[i].getBoundingClientRect();
+      if (rect.top <= mid && rect.bottom >= mid) {
+        return Number(kids[i].dataset.index);
       }
+    }
+    return 0;
+  }
+
+  function atBottom() {
+    var doc = document.documentElement;
+    // If the whole menu fits on screen there is no end to wrap from, and
+    // top and bottom are the same place.
+    if (doc.scrollHeight <= window.innerHeight + 1) return false;
+    return window.scrollY + window.innerHeight >= doc.scrollHeight - WRAP_EPSILON;
+  }
+
+  // Instant, not smooth: this is often fifteen thousand pixels of scrolling,
+  // and animating it is nauseating rather than helpful.
+  function wrapToTop() {
+    suppressWrapUntil = Date.now() + WRAP_COOLDOWN;
+    window.scrollTo(0, 0);
+  }
+
+  function updateCounter() {
+    var index = currentIndex();
+    if (index) {
+      pageCounter.textContent = "Page " + index + " of " + manifest.pageCount;
     }
   }
 
@@ -171,9 +139,22 @@
     requestAnimationFrame(function () {
       ticking = false;
       if (!lightbox.hidden) return;
-      extend();
+
+      updateCounter();
+
+      // Momentum scrolling keeps firing events after the jump, and on iOS it
+      // keeps travelling too, so without the cooldown the page can bounce.
+      if (atBottom() && Date.now() >= suppressWrapUntil) {
+        wrapToTop();
+        // Re-read rather than wait for the scroll event this jump will fire:
+        // scrollY is already updated, and the counter must never disagree
+        // with where the reader is.
+        updateCounter();
+      }
     });
   }
+
+  backToTop.addEventListener("click", wrapToTop);
 
   /* ------------------------------------------------------------------ */
   /* zoom lightbox                                                         */
@@ -238,7 +219,7 @@
 
   function openLightbox(img) {
     var figure = img.closest(".page");
-    var data = figure ? pageData(Number(figure.dataset.virtual)) : null;
+    var data = figure ? pageData(Number(figure.dataset.index)) : null;
     lightboxImg.src = data ? data.large : img.dataset.large;
     lightboxImg.alt = img.alt;
     lightbox.hidden = false;
@@ -255,6 +236,9 @@
     pointers.clear();
     pinchStart = null;
     document.documentElement.style.overflow = "";
+    // Landing back at the very bottom would otherwise trip the wrap check
+    // before the reader has even let go of the zoomed page.
+    suppressWrapUntil = Date.now() + WRAP_COOLDOWN;
     window.scrollTo(0, savedScrollY);
   }
 
@@ -358,13 +342,17 @@
       manifest = data;
       document.documentElement.style.setProperty("--ar", data.aspectRatio);
 
-      lastVirtual = data.pageCount;
       deck.appendChild(renderRange(1, data.pageCount));
       observeNew();
 
       status.hidden = true;
+      pageCounter.hidden = false;
+      deckEnd.hidden = false;
+
       window.addEventListener("scroll", onScroll, { passive: true });
-      extend();
+      // A reload can restore the reader mid-menu, so seed the counter from
+      // wherever they actually are rather than assuming page 1.
+      onScroll();
     })
     .catch(function (error) {
       status.className = "status status--error";

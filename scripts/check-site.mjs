@@ -3,10 +3,18 @@
 //   - every manifest path actually resolves over HTTP (the check that was
 //     missing before, which is why a 404 shipped to production)
 //   - every image 200s with Content-Type image/webp and a WebP body
-//   - the endless scroll advances one page per swipe without jumps
-//   - modulo image mapping stays correct past the end of the menu
+//   - the deck is exactly the menu: 11 pages, in order, and never spliced
+//   - scrolling runs 1..11 without jumps, and stops cleanly at both ends
+//   - reaching the bottom wraps back to page 1
+//   - the wrap cooldown blocks the momentum re-wrap that would bounce the page
+//   - the page counter tracks the page being read
 //   - the lightbox opens, loads the large variant, and closes
 //   - no console errors or unhandled exceptions anywhere in the run
+//
+// jsdom has no layout engine, so page geometry, scroll clamping and document
+// height are all synthesised here. That matters most for the wrap assertions:
+// they only mean anything if scrollHeight and the scroll clamp behave like a
+// real browser.
 //
 // Usage:  python -m http.server 8123 --bind 127.0.0.1   (from project root)
 //         node check.mjs
@@ -16,10 +24,18 @@ import { JSDOM, VirtualConsole } from "jsdom";
 
 const ORIGIN = process.env.ORIGIN ?? "http://127.0.0.1:8123";
 const H = 1000; // pretend every page is 1000px tall; jsdom has no layout
-const BATCH = 6;
-const MAX_CHILDREN = 36;
+const BOTTOM_PAD = 88; // body padding-bottom reserving room for the FAB
 const MANIFEST = JSON.parse(fs.readFileSync("assets/pages/manifest.json", "utf8"));
 const N = MANIFEST.pageCount;
+
+// app.js reads scrollHeight to decide the reader has hit the end. jsdom has
+// no layout, so synthesise the document height from the fake page size and
+// clamp scrolling the way a real browser would. Without the clamp, atBottom()
+// would compare against a bogus number and the wrap assertions would pass
+// without proving anything.
+const docHeight = () => N * H + BOTTOM_PAD;
+const maxScroll = () => Math.max(0, docHeight() - H);
+const WRAP_COOLDOWN_MS = 700; // must match app.js
 
 const fail = [];
 let passed = 0;
@@ -89,32 +105,52 @@ const dom = await JSDOM.fromURL(`${ORIGIN}/index.html`, {
     // it requests must come off the wire, so a bad path cannot pass.
     window.fetch = (url, opts) => fetch(new URL(url, ORIGIN), opts);
 
-    // jsdom has no IntersectionObserver. Report figures visible as the
-    // viewport reaches them, so lazy loading is exercised for real.
+    // jsdom has no IntersectionObserver. Re-check observed figures against
+    // the fake layout every time the harness scrolls, so lazy loading is
+    // exercised across the whole menu and not just for the pages that happen
+    // to be on screen at boot.
+    const observed = [];
     window.IntersectionObserver = class {
       constructor(cb) {
         this.cb = cb;
       }
       observe(el) {
-        const idx = [...el.parentElement.children].indexOf(el);
-        const top = idx * H - layout.scrollY;
-        if (top < H * 1.5 && top + H > -H * 1.5) {
-          setTimeout(() => this.cb([{ isIntersecting: true, target: el }]), 0);
-        } else {
-          this.pending = el;
-        }
+        observed.push({ cb: this.cb, el, done: false });
       }
       unobserve() {}
       disconnect() {}
     };
+    window.__flushIO = () => {
+      for (const entry of observed) {
+        if (entry.done) continue;
+        const siblings = entry.el.parentElement ? [...entry.el.parentElement.children] : [];
+        const idx = siblings.indexOf(entry.el);
+        if (idx < 0) continue;
+        const top = idx * H - layout.scrollY;
+        if (top < H * 1.5 && top + H > -H * 1.5) {
+          entry.done = true;
+          entry.cb([{ isIntersecting: true, target: entry.el }]);
+        }
+      }
+    };
+
+    // jsdom has no layout and reports a root scrollHeight of 0, which would
+    // make app.js's atBottom() bail out and never wrap. Define it on
+    // Element.prototype, which is where jsdom actually keeps scrollHeight.
+    Object.defineProperty(window.Element.prototype, "scrollHeight", {
+      configurable: true,
+      get() {
+        return this === window.document.documentElement ? docHeight() : 0;
+      },
+    });
 
     Object.defineProperty(window, "innerHeight", { get: () => H });
     Object.defineProperty(window, "scrollY", { get: () => layout.scrollY });
     window.scrollTo = (_x, y) => {
-      layout.scrollY = y ?? 0;
+      layout.scrollY = Math.min(Math.max(y ?? 0, 0), maxScroll());
     };
     window.scrollBy = (_x, y) => {
-      layout.scrollY += y ?? 0;
+      window.scrollTo(0, layout.scrollY + (y ?? 0));
     };
 
     Object.defineProperty(window.HTMLElement.prototype, "offsetHeight", {
@@ -147,28 +183,29 @@ const deck = document.getElementById("deck");
 
 const tick = () => new Promise((r) => setTimeout(r, 40));
 const kids = () => [...deck.children];
-const virtuals = () => kids().map((k) => Number(k.dataset.virtual));
-const contiguous = (list) => list.every((v, i) => i === 0 || v === list[i - 1] + 1);
+const indices = () => kids().map((k) => Number(k.dataset.index));
+const counterText = () => document.getElementById("page-counter").textContent;
 
-// Which virtual page sits under the middle of the viewport.
-function centerVirtual() {
+// The deck is exactly the menu: pages 1..N, in order, and never changing.
+const inOrder = (list) => list.every((v, i) => v === i + 1);
+
+// Which page sits under the middle of the viewport.
+function centrePage() {
   const mid = H / 2;
   for (const k of kids()) {
     const r = k.getBoundingClientRect();
-    if (r.top <= mid && r.bottom >= mid) return Number(k.dataset.virtual);
+    if (r.top <= mid && r.bottom >= mid) return Number(k.dataset.index);
   }
   return null;
 }
 
-const expectedFile = (virtual) => {
-  const i = ((virtual - 1) % N + N) % N;
-  return `page-${String(i + 1).padStart(2, "0")}`;
-};
+const expectedFile = (index) => `page-${String(index).padStart(2, "0")}`;
 
 async function settle() {
   await tick();
   await new Promise((r) => window.requestAnimationFrame(() => r()));
   await tick();
+  window.__flushIO?.();
 }
 
 // Wait for a condition instead of a fixed delay: over the network the manifest
@@ -186,73 +223,90 @@ async function waitFor(label, predicate, timeoutMs = 20000) {
 
 const bootReady = await waitFor("deck populated on boot", () => kids().length > 0);
 
-check("deck populated on boot", bootReady && kids().length >= N, `${kids().length} nodes`);
-check("virtual window contiguous", contiguous(virtuals()), virtuals().join(","));
+check("deck populated on boot", bootReady && kids().length === N, `${kids().length} nodes`);
+check("pages are 1..N in document order", inOrder(indices()), indices().join(","));
 check("status hidden after load", document.getElementById("status").hidden === true);
 check("no error shown to user", !document.getElementById("status").className.includes("error"));
+check("page counter revealed after boot", document.getElementById("page-counter").hidden === false);
+check("end-of-menu footer revealed", document.getElementById("deck-end").hidden === false);
+check("counter seeded on page 1", counterText() === `Page 1 of ${N}`, counterText());
 
-// Boot-time extend() adds headroom above page 1 and pays the scroll back, so
-// the reader should still be on page 1.
-check("page 1 under centre after boot", centerVirtual() === 1, `got ${centerVirtual()}`);
-check("headroom added above page 1", virtuals()[0] < 1, `first=${virtuals()[0]}`);
+// Nothing is spliced above page 1 any more, so the reader starts on it.
+check("page 1 under centre after boot", centrePage() === 1, `got ${centrePage()}`);
+check("no headroom prepended above page 1", indices()[0] === 1, `first=${indices()[0]}`);
 
-// Images attached by the IntersectionObserver must point at served files.
-let srcOk = true;
-for (const k of kids()) {
-  const img = k.querySelector("img");
-  if (!img.src) continue;
-  const virtual = Number(k.dataset.virtual);
-  if (!img.src.includes(`${expectedFile(virtual)}.sm.webp`)) {
-    srcOk = false;
-    fail.push(`virtual ${virtual} src is ${img.src}, expected ${expectedFile(virtual)}`);
-  }
-}
-check("loaded image srcs resolve to served files", srcOk);
-
-// Scroll relatively, like a thumb, so app.js's scrollTop compensation runs.
+// Scroll relatively, like a thumb, through every page in order.
 async function swipe(dy, label) {
-  const before = centerVirtual();
+  const before = centrePage();
+  const size = kids().length;
   window.scrollBy(0, dy);
   window.dispatchEvent(new window.Event("scroll"));
   await settle();
-  const after = centerVirtual();
-
-  check(`${label}: advanced exactly one page`, after === before + Math.sign(dy), `${before} -> ${after}`);
-  check(`${label}: contiguous`, contiguous(virtuals()), virtuals().join(","));
-  check(`${label}: DOM bounded`, kids().length <= MAX_CHILDREN, `${kids().length}`);
-  check(`${label}: a page is centred`, after !== null);
-  return after;
+  check(`${label}: centred on a page`, centrePage() !== null);
+  check(`${label}: deck size unchanged`, kids().length === size, `${kids().length}`);
+  check(`${label}: counter tracks the page`, counterText() === `Page ${centrePage()} of ${N}`, counterText());
+  return { before, after: centrePage() };
 }
 
-const seen = new Set([centerVirtual()]);
-for (let i = 1; i <= 30; i++) seen.add(await swipe(H, `down ${i}`));
-const maxSeen = Math.max(...seen);
-for (let i = 1; i <= 30; i++) seen.add(await swipe(-H, `up ${i}`));
-const minSeen = Math.min(...seen);
+const seen = new Set([centrePage()]);
+for (let i = 1; i < N; i++) {
+  const { before, after } = await swipe(H, `down ${i}`);
+  check(`down ${i}: advanced exactly one page`, after === before + 1, `${before} -> ${after}`);
+  seen.add(after);
+}
+check("reader reached the last page", centrePage() === N, `got ${centrePage()}`);
+check("reader saw every page in order", seen.size === N, `${seen.size} positions`);
+check("deck still holds exactly N pages after scrolling", kids().length === N, `${kids().length}`);
+check("scrolling up from the last page does not wrap", layout.scrollY > 0, `scrollY=${layout.scrollY}`);
 
-check("scrolled well past the end of the menu", maxSeen - minSeen > N, `${minSeen} -> ${maxSeen}`);
-check("reader saw every page at least once", seen.size >= N, `${seen.size} positions`);
+for (let i = 1; i < N; i++) {
+  const { before, after } = await swipe(-H, `up ${i}`);
+  check(`up ${i}: went back exactly one page`, after === before - 1, `${before} -> ${after}`);
+}
+check("scrolling up past page 1 stops at the top", layout.scrollY === 0, `scrollY=${layout.scrollY}`);
+check("reader is back on page 1", centrePage() === 1, `got ${centrePage()}`);
 
-// Every page touched during the scroll must still map to the right file.
+// Every page passed the viewport, so lazy loading must have attached all of them.
+check("every page received a real image source", kids().every((k) => k.querySelector("img").src));
+
+// Each page must still point at its own file, with no modulo remapping.
 let mappingOk = true;
 for (const k of kids()) {
   const img = k.querySelector("img");
-  const virtual = Number(k.dataset.virtual);
-  if (img.src && !img.src.includes(`${expectedFile(virtual)}.sm.webp`)) {
+  const index = Number(k.dataset.index);
+  if (img.src && !img.src.includes(`${expectedFile(index)}.sm.webp`)) {
     mappingOk = false;
-    fail.push(`after scroll: virtual ${virtual} -> ${img.src}`);
+    fail.push(`page ${index} src is ${img.src}, expected ${expectedFile(index)}`);
   }
 }
-check("modulo mapping correct after full scroll", mappingOk);
+check("each page maps to its own served file", mappingOk);
 
-// Extreme virtual numbers must still land inside the manifest.
-check(
-  "extreme virtual numbers map into the manifest",
-  [...seen].every((v) => {
-    const i = ((v - 1) % N + N) % N;
-    return MANIFEST.pages[i] !== undefined;
-  })
-);
+// Reaching the end sends the reader back to the top.
+async function jumpToBottom() {
+  window.scrollTo(0, maxScroll());
+  window.dispatchEvent(new window.Event("scroll"));
+  await settle();
+  return layout.scrollY;
+}
+
+check("wrap fires at the bottom", (await jumpToBottom()) === 0, `scrollY=${layout.scrollY}`);
+check("wrap resets the counter to page 1", counterText() === `Page 1 of ${N}`, counterText());
+check("wrap leaves the deck untouched", kids().length === N, `${kids().length}`);
+
+// Momentum keeps firing scroll events after the jump and, on iOS, keeps
+// travelling too. A second hit inside the cooldown must not re-wrap or the
+// page bounces down the menu again.
+check("cooldown blocks an immediate re-wrap", (await jumpToBottom()) === maxScroll(), `scrollY=${layout.scrollY}`);
+
+await new Promise((r) => setTimeout(r, WRAP_COOLDOWN_MS + 200));
+check("wrap fires again once the cooldown expires", (await jumpToBottom()) === 0, `scrollY=${layout.scrollY}`);
+
+// The end-of-menu button does the same thing on demand.
+window.scrollTo(0, maxScroll() - 4000);
+await settle();
+document.getElementById("back-to-top").dispatchEvent(new window.Event("click", { bubbles: true }));
+await settle();
+check("back-to-top button returns to the top", layout.scrollY === 0, `scrollY=${layout.scrollY}`);
 
 // --- 3. lightbox -----------------------------------------------------------
 const firstImg = deck.querySelector(".page img");
@@ -282,8 +336,7 @@ check("scroll lock released", document.documentElement.style.overflow === "");
 check("no console errors during the run", consoleErrors.length === 0, consoleErrors.join(" | "));
 
 console.log(`\npages in menu: ${N}`);
-console.log(`pages scrolled through: ${minSeen} -> ${maxSeen}`);
-console.log(`distinct page positions visited: ${seen.size}`);
+console.log(`distinct pages visited: ${seen.size}`);
 console.log(`DOM nodes after full scroll: ${kids().length}`);
 console.log(`checks passed: ${passed}`);
 
@@ -293,5 +346,5 @@ if (fail.length) {
   window.close();
   process.exit(1);
 }
-console.log("\nAll asset, scroll, mapping and lightbox checks passed.");
+console.log("\nAll asset, scroll, wrap and lightbox checks passed.");
 window.close();

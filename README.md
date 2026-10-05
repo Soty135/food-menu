@@ -1,8 +1,8 @@
 # Davels Kitchen — menu site
 
-The menu PDF, published as a continuously scrolling web page. Scanning the QR
-code on a table card lands here; scrolling moves through the 11 pages and loops
-back to page 1, so it never ends.
+The menu PDF, published as a scrolling web page. Scanning the QR code on a
+table card lands here; you scroll through the 11 pages, and reaching the end
+sends you back to the top so browsing never dead-ends.
 
 Plain HTML, CSS and one small JavaScript file. No framework, no build step on
 Vercel.
@@ -40,9 +40,13 @@ node scripts/check-site.mjs
 ```
 
 It makes real HTTP requests for all 22 images and asserts each one 200s and
-carries a valid WebP body, then drives the page through 60 swipes asserting the
-scroll advances one page at a time, the modulo image mapping stays correct past
-page 11, and the lightbox opens and closes. Set `ORIGIN` to point it at a
+carries a valid WebP body, then drives the page through every page asserting
+the deck holds exactly 11 figures and never changes size, that scrolling runs
+1..11 without jumps and stops cleanly at both ends, that the bottom wraps back
+to page 1 and then respects its cooldown, and that the lightbox opens and
+closes. jsdom has no layout engine, so the harness synthesises page geometry,
+scroll clamping and document height itself — without those the wrap
+assertions would pass without proving anything. Set `ORIGIN` to point it at a
 deployed URL instead.
 
 ## Deploying
@@ -82,13 +86,20 @@ python -m http.server 8000 --bind 0.0.0.0
 | Piece | File | Role |
 | --- | --- | --- |
 | Pages | `assets/pages/` | WebP per page at 144 and 216 dpi, plus `manifest.json` |
-| Shell | `index.html` | Page container, call button, lightbox markup |
+| Shell | `index.html` | Page container, call button, counter, end-of-menu footer, lightbox markup |
 | Styles | `assets/styles.css` | Layout, fit-to-width pages, button, overlay |
-| Behaviour | `assets/app.js` | Lazy loading, page wrapping, zoom |
+| Behaviour | `assets/app.js` | Lazy loading, end-of-menu wrap, zoom |
 
-Only 11 pages exist, so the endless scroll is virtual: `app.js` tracks a virtual
-page number and splices in more figures as the reader nears either end, mapping
-image sources back to the 11 originals with modulo arithmetic. After a splice
-above the viewport it corrects `scrollTop` by the height it added, so the page
-under the reader's thumb never moves. Pages far from the reader are trimmed to
-keep the DOM bounded.
+The deck is exactly the menu: 11 figures rendered once, numbered 1..11 by
+`data-index`. Nothing is spliced in or trimmed out while the reader scrolls,
+which is what keeps the scroll smooth — an earlier version kept a sliding
+window of pages and corrected `scrollTop` by the height it had inserted, and
+that fought the browser's own scroll anchoring and made the page judder.
+
+The only scroll handler updates the "Page X of 11" counter and, when the
+reader reaches the bottom, jumps back to the top. That jump is instant rather
+than animated, since it often spans fifteen thousand pixels. It is also rate
+limited by `WRAP_COOLDOWN`: momentum scrolling keeps firing scroll events
+afterwards, and on iOS it keeps travelling too, so without the cooldown the
+page would bounce straight back down. Page 1 is a hard stop — scrolling up
+past it does nothing.
