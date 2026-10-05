@@ -84,15 +84,6 @@ body {
   opacity: 1;
 }
 
-.deck--noscript {
-  gap: 1.25rem;
-}
-
-.deck--noscript .page img {
-  opacity: 1;
-  transition: none;
-}
-
 /* ---------- status ---------- */
 
 .status {
@@ -152,17 +143,6 @@ body {
   height: 1.15em;
   fill: currentColor;
   flex: none;
-}
-
-.call-fab--inline {
-  position: static;
-  transform: none;
-  margin: 0.5rem 0 1.5rem;
-}
-
-.call-fab--inline:hover,
-.call-fab--inline:active {
-  transform: none;
 }
 
 /* ---------- lightbox ---------- */

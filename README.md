@@ -24,19 +24,42 @@ Vercel.
 pip install pymupdf pillow
 ```
 
+After rendering it verifies that every path it wrote into the manifest resolves
+to a real file from the site root, and exits non-zero if not. Manifest paths are
+relative to the site root because the browser resolves them against the document
+URL, not against the manifest's own folder.
+
+## Verifying
+
+`scripts/check-site.mjs` serves nothing itself, so start a server first:
+
+```
+python -m http.server 8123 --bind 127.0.0.1
+npm install jsdom
+node scripts/check-site.mjs
+```
+
+It makes real HTTP requests for all 22 images and asserts each one 200s and
+carries a valid WebP body, then drives the page through 60 swipes asserting the
+scroll advances one page at a time, the modulo image mapping stays correct past
+page 11, and the lightbox opens and closes. Set `ORIGIN` to point it at a
+deployed URL instead.
+
 ## Deploying
 
 ```
-npm i -g vercel
 vercel
 vercel --prod
 ```
 
 The source PDF and the `scripts/` folder are excluded from the upload via
-`.vercelignore`, so the deploy payload is roughly 6.5 MB.
+`.vercelignore`, so the deploy payload is roughly 5.8 MB.
 
-Once you have the production URL, generate a QR code pointing at
-`https://<your-domain>.vercel.app` and print it for the table cards.
+Production is <https://dabels-menu.vercel.app>. Vercel is connected to the
+GitHub repo, so pushing to `main` redeploys automatically.
+
+Once you have the final URL, generate a QR code pointing at
+`https://dabels-menu.vercel.app` and print it for the table cards.
 
 ## Local preview
 

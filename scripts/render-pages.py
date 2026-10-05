@@ -72,6 +72,26 @@ def lqip_data_uri(img):
     return "data:image/webp;base64," + base64.b64encode(buf.getvalue()).decode("ascii")
 
 
+def verify_paths(pages):
+    """Fail loudly if a manifest path does not resolve to a real file.
+
+    The manifest is written to be read by the browser relative to the site
+    root, so a path can be perfectly correct JSON and still 404. Checking it
+    here catches that before it ever reaches a customer.
+    """
+    missing = []
+    for page in pages:
+        for key in ("small", "large"):
+            if not (ROOT / page[key]).is_file():
+                missing.append(f"page {page['index']} {key} -> {page[key]}")
+
+    if missing:
+        sys.exit(
+            "Manifest paths do not resolve from the site root:\n  "
+            + "\n  ".join(missing)
+        )
+
+
 def main():
     if PDF_PATH is None:
         sys.exit("No PDF found in project root.")
@@ -103,8 +123,10 @@ def main():
         pages.append(
             {
                 "index": number,
-                "small": f"pages/{stem}.sm.webp",
-                "large": f"pages/{stem}.lg.webp",
+                # Paths are relative to the site root, not to this manifest,
+                # because the browser resolves them against the document URL.
+                "small": f"assets/pages/{stem}.sm.webp",
+                "large": f"assets/pages/{stem}.lg.webp",
                 "width": sm_img.width,
                 "height": sm_img.height,
                 "largeWidth": lg_img.width,
@@ -122,10 +144,13 @@ def main():
         "aspectRatio": round(doc[0].rect.width / doc[0].rect.height, 6),
         "pages": pages,
     }
+    verify_paths(pages)
+
     manifest_path = OUT_DIR / "manifest.json"
     manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
 
     print(f"\n  {doc.page_count} pages -> {OUT_DIR}")
+    print("  all manifest paths verified against disk")
     print(f"  sm total {small_total / 1048576:.2f} MB")
     print(f"  lg total {large_total / 1048576:.2f} MB")
     print(f"  manifest {manifest_path}")
