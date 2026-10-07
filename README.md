@@ -1,7 +1,7 @@
 # Davels Kitchen — menu site
 
 The menu PDF, published as a scrolling web page. Scanning the QR code on a
-table card lands here; you scroll through the 11 pages, and reaching the end
+table card lands here; you scroll through the 12 pages, and reaching the end
 sends you back to the top so browsing never dead-ends.
 
 Plain HTML, CSS and one small JavaScript file. No framework, no build step on
@@ -17,6 +17,11 @@ Vercel.
    ```
 
 3. Commit and deploy. Vercel serves the static output as-is.
+
+The script overwrites the pages it renders but never deletes any, so if the new
+PDF has fewer pages than the old one, remove the leftover `page-NN.*.webp`
+files before committing. Its page count flows from `menu.json` into both check
+scripts, so nothing else needs editing when the menu grows or shrinks.
 
 `scripts/render-pages.py` needs PyMuPDF and Pillow:
 
@@ -39,11 +44,11 @@ npm install jsdom
 node scripts/check-site.mjs
 ```
 
-It makes real HTTP requests for all 22 images and asserts each one 200s and
+It makes real HTTP requests for all 24 images and asserts each one 200s and
 carries a valid WebP body, then drives the page through every page asserting
-the deck holds exactly 11 figures and never changes size, that scrolling runs
-1..11 without jumps and stops cleanly at both ends, that the bottom wraps back
-to page 1 and then respects its cooldown, and that the lightbox opens and
+that the deck holds exactly 12 figures and never changes size, that scrolling
+runs 1..12 without jumps and stops cleanly at both ends, that the bottom wraps
+back to page 1 and then respects its cooldown, and that the lightbox opens and
 closes. jsdom has no layout engine, so it synthesises page geometry, scroll
 clamping and document height itself — without a clamped `scrollHeight` the
 wrap assertions would pass without proving anything.
@@ -96,7 +101,11 @@ Once you have the final URL, generate a QR code pointing at
 
 `vercel.json` serves `assets/pages/` as `immutable` for a year. That is safe
 for the images and only for the images: their filenames are fixed, so a given
-URL always means the same bytes.
+URL always means the same bytes. Re-rendering puts new bytes at those same
+filenames, which is why `render-pages.py` writes a hash of the PDF into
+`menu.json` as `version` and `app.js` appends it as `?v=` to every image URL —
+a new menu arrives at new URLs, and the manifest is served `must-revalidate`
+so browsers hear about the change.
 
 `assets/menu.json` is the exception and is deliberately **not** in that
 directory. It lists the image paths, so a manifest cached too long stops a
@@ -137,7 +146,7 @@ python -m http.server 8000 --bind 0.0.0.0
 | Styles | `assets/styles.css` | Layout, fit-to-width pages, button, overlay |
 | Behaviour | `assets/app.js` | Lazy loading, end-of-menu wrap, zoom |
 
-The deck is exactly the menu: 11 figures rendered once, numbered 1..11 by
+The deck is exactly the menu: 12 figures rendered once, numbered 1..12 by
 `data-index`. Nothing is spliced in or trimmed out while the reader scrolls,
 which is what keeps the scroll smooth — an earlier version kept a sliding
 window of pages and corrected `scrollTop` by the height it had inserted, and
@@ -151,7 +160,7 @@ to explain the blank page. The blurred placeholder is painted on the figure
 rather than the image, because the image is transparent until it has loaded,
 and a `load` *or* `error` event reveals it so a 404 cannot leave a blank box.
 
-The only scroll handler updates the "Page X of 11" counter and, when the
+The only scroll handler updates the "Page X of 12" counter and, when the
 reader reaches the bottom, jumps back to the top. That jump is instant rather
 than animated, since it often spans fifteen thousand pixels. It is also rate
 limited by `WRAP_COOLDOWN`: momentum scrolling keeps firing scroll events

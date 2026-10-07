@@ -3,9 +3,10 @@
 //   - every manifest path actually resolves over HTTP (the check that was
 //     missing before, which is why a 404 shipped to production)
 //   - every image 200s with Content-Type image/webp and a WebP body
-//   - the deck is exactly the menu: 11 pages, in order, and never spliced
+//   - the deck is exactly the menu: one figure per manifest page, in order,
+//     and never spliced
 //   - every image has its source attached at boot, with no observer involved
-//   - scrolling runs 1..11 without jumps, and stops cleanly at both ends
+//   - scrolling runs 1..N without jumps, and stops cleanly at both ends
 //   - reaching the bottom wraps back to page 1
 //   - the wrap cooldown blocks the momentum re-wrap that would bounce the page
 //   - the page counter tracks the page being read
@@ -336,6 +337,17 @@ for (const k of kids()) {
 }
 check("each page maps to its own served file", mappingOk);
 
+// assets/pages/ is served immutable for a year, so the version query is the
+// only thing that gets a returning visitor the new bytes of a re-rendered
+// menu. Without it the site keeps showing the previous menu indefinitely.
+if (menu?.version) {
+  check(
+    "every image URL carries the manifest version",
+    kids().every((k) => (k.querySelector("img")?.src ?? "").includes(`?v=${menu.version}`)),
+    `version=${menu.version}`
+  );
+}
+
 // Reaching the end sends the reader back to the top.
 async function jumpToBottom() {
   window.scrollTo(0, maxScroll());
@@ -371,7 +383,7 @@ await settle();
 const lb = document.getElementById("lightbox");
 const lbImg = document.getElementById("lightbox-img");
 check("lightbox opens on tap", lb.hidden === false);
-check("lightbox uses the large variant", /\.lg\.webp$/.test(lbImg.getAttribute("src") ?? ""), lbImg.getAttribute("src"));
+check("lightbox uses the large variant", /\.lg\.webp(\?v=[0-9a-f]+)?$/.test(lbImg.getAttribute("src") ?? ""), lbImg.getAttribute("src"));
 check("lightbox image has alt text", (lbImg.alt ?? "").length > 0);
 check("body scroll locked while open", document.documentElement.style.overflow === "hidden");
 

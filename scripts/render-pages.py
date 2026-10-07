@@ -11,6 +11,7 @@ Produces:
 """
 
 import base64
+import hashlib
 import io
 import json
 import re
@@ -140,6 +141,11 @@ def main():
 
     manifest = {
         "source": PDF_PATH.name,
+        # Content hash of the PDF. vercel.json serves assets/pages/ immutable
+        # for a year under fixed filenames, so a re-render would otherwise put
+        # new bytes behind URLs a returning visitor already cached. app.js
+        # appends this as ?v= and the image URLs change with the menu.
+        "version": hashlib.sha256(PDF_PATH.read_bytes()).hexdigest()[:8],
         "pageCount": doc.page_count,
         "aspectRatio": round(doc[0].rect.width / doc[0].rect.height, 6),
         "pages": pages,

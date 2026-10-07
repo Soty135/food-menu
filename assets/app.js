@@ -29,6 +29,15 @@
     return manifest.pages[index - 1];
   }
 
+  // vercel.json serves assets/pages/ immutable for a year under fixed
+  // filenames, so a re-rendered menu would otherwise never reach anyone who
+  // scanned before it. The manifest carries a hash of the PDF; tagging it on
+  // changes every image URL when the menu changes. A manifest without a
+  // version still works, it just behaves the way it did before this existed.
+  function versioned(path) {
+    return manifest.version ? path + "?v=" + manifest.version : path;
+  }
+
   function createPage(index) {
     var data = pageData(index);
     var figure = document.createElement("figure");
@@ -46,15 +55,15 @@
     img.decoding = "async";
     img.setAttribute("loading", "lazy");
     img.sizes = "(max-width: 900px) 100vw, 900px";
-    img.dataset.large = data.large;
+    img.dataset.large = versioned(data.large);
 
     // Sources are set up front and native lazy loading defers the fetch. This
     // used to hang off an IntersectionObserver callback, which meant a browser
     // that never delivered that callback left every page permanently invisible.
     img.srcset =
-      data.small + " " + data.width + "w, " +
-      data.large + " " + data.largeWidth + "w";
-    img.src = data.small;
+      versioned(data.small) + " " + data.width + "w, " +
+      versioned(data.large) + " " + data.largeWidth + "w";
+    img.src = versioned(data.small);
 
     // Fade in once the pixels are there, but never stay invisible on failure:
     // a 404 has to leave the placeholder showing, not a blank rectangle.
@@ -200,7 +209,7 @@
   function openLightbox(img) {
     var figure = img.closest(".page");
     var data = figure ? pageData(Number(figure.dataset.index)) : null;
-    lightboxImg.src = data ? data.large : img.dataset.large;
+    lightboxImg.src = data ? versioned(data.large) : img.dataset.large;
     lightboxImg.alt = img.alt;
     lightbox.hidden = false;
     resetView();

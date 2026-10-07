@@ -23,13 +23,14 @@
 //         ORIGIN=https://dabels-menu.vercel.app node scripts/check-browser.mjs
 
 import { spawn } from "node:child_process";
-import { existsSync, mkdtempSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 const ORIGIN = (process.env.ORIGIN ?? "http://127.0.0.1:8123").replace(/\/$/, "");
 const PORT = 9333;
 const MOBILE = { width: 390, height: 844 };
+const N = JSON.parse(readFileSync("assets/menu.json", "utf8")).pageCount;
 
 const CANDIDATES = [
   process.env.CHROME_PATH,
@@ -208,7 +209,7 @@ const POSITION = `(() => {
 
 const boot = await evaluate(PROBE);
 
-check("deck rendered every page", boot.figures === 11, `${boot.figures} figures`);
+check("deck rendered every page", boot.figures === N, `${boot.figures} figures`);
 check("every image has a src", boot.withSrc === boot.figures, `${boot.withSrc}/${boot.figures}`);
 check("every image is natively lazy", boot.lazy === boot.figures, `${boot.lazy}/${boot.figures}`);
 check("every page has a blurred placeholder", boot.placeholders === boot.figures, `${boot.placeholders}/${boot.figures}`);
@@ -236,8 +237,8 @@ await wait(1200);
 const wrapped = await evaluate(POSITION);
 check("reaching the bottom wraps to the top", wrapped.scrollY === 0, `scrollY=${wrapped.scrollY}`);
 check("wrap lands on page 1", wrapped.centred === 1, `centred=${wrapped.centred}`);
-check("wrap resets the counter", wrapped.counter === "Page 1 of 11", `counter=${wrapped.counter}`);
-check("wrap leaves the deck intact", wrapped.figures === 11, `${wrapped.figures} figures`);
+check("wrap resets the counter", wrapped.counter === `Page 1 of ${N}`, `counter=${wrapped.counter}`);
+check("wrap leaves the deck intact", wrapped.figures === N, `${wrapped.figures} figures`);
 
 await evaluate(`window.scrollTo(0, 2500); true`);
 await wait(600);

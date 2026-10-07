@@ -1,6 +1,7 @@
 {
-  "source": "White and Black Modern Simple Food Menu_20261005_162333_0000.pdf",
-  "pageCount": 11,
+  "source": "Dabels-food-menu.pdf",
+  "version": "fdfc9318",
+  "pageCount": 12,
   "aspectRatio": 0.707035,
   "pages": [
     {
@@ -11,7 +12,7 @@
       "height": 1685,
       "largeWidth": 1787,
       "largeHeight": 2527,
-      "alt": "Jollof Rice - menu page 1 of 11",
+      "alt": "Jollof Rice - menu page 1 of 12",
       "placeholder": "data:image/webp;base64,UklGRrIAAABXRUJQVlA4IKYAAABwBQCdASoUABwAPtVaoUyoJSMiMAwBABqJYgC+TagBnVPfVV55xE3OCApbxlNIRMIl2NUAAP7riuduQeelbgV5nziwZP0pEDfTPdqHoFsDrgsg2HJvD+8WZ+/ek8CKbJUlsHva5BXLzhhmZ5grrHXokPGM2O/k8jSWe3tmHtfgHmdIgl1Ecx0DW/NEcEVQj/kuCoVoZLoLb2Wp+Efi6lSTmG1KHAAA"
     },
     {
@@ -22,8 +23,8 @@
       "height": 1685,
       "largeWidth": 1787,
       "largeHeight": 2527,
-      "alt": "Coconut Stir - menu page 2 of 11",
-      "placeholder": "data:image/webp;base64,UklGRrQAAABXRUJQVlA4IKgAAAAwBgCdASoUABwAPt1cp0yopSOiMBgMARAbiWYAuyCsPA//+4ABFbXsqj3jOBDs6VrpVlhyCnC1K2oAAP7wiz8ZgUpYh+6+51Xwv44IF9TbzWx154VhqZPd0TplRq49TIsE0S4zDmak5IHFCNnUqRlc/kERRNRWlkrBMIzihnH8iqzkBB527kawMgF6X7agR9zmpQPXoVVSwbZXSQesg4WkkBn0m+UZAAA="
+      "alt": "Coconut Stir - menu page 2 of 12",
+      "placeholder": "data:image/webp;base64,UklGRroAAABXRUJQVlA4IK4AAACwBgCdASoUABwAPt1gqE2opaOiMBgIARAbiWIAuyCLPA//+3lb/4F5FMYIrbNvy/BdNYgMTSR3fuJGcHKlGAD+7jnyCmpoE3FT5XNGGdx0LDsWvC1CWxdqUg11TnFwQ0r59yVvKsED4OwvkIfzYZSmOvbXpz1V+nZmFOqP9ZHeqa7KUUaTMPTA+P0nDpGTQTERb8KWimnnzX3zmpMJq1zHWuM0ORVnyYHSCNnAAAA="
     },
     {
       "index": 3,
@@ -33,8 +34,8 @@
       "height": 1685,
       "largeWidth": 1787,
       "largeHeight": 2527,
-      "alt": "Seafood Okra - menu page 3 of 11",
-      "placeholder": "data:image/webp;base64,UklGRsAAAABXRUJQVlA4ILQAAABQBgCdASoUABwAPt1iqE4opaOiMBgIARAbiWQAuzlA2zggX//dzAiqqQUSavIGMXbnQFjHze6KZtgHKAD+7jnwIN1Le4bg8Bp2TcyGukMZdOhxe/Uj3feLaMigwtKJ1nOLq91i3y6SPWQbVvwh+tUPIG6VvhBAT3jjb1CoJNqYPwT3axnJ5eIKuFOzDsQ0gBhXfxmp5iiVfqiDf56dZgxQ+KlxQZRprPYBVSF3JdoxlW0AAAA="
+      "alt": "Singapore - menu page 3 of 12",
+      "placeholder": "data:image/webp;base64,UklGRsQAAABXRUJQVlA4ILgAAADQBQCdASoUABwAPt1epkyopSOiMAgBEBuJZAC25/Z0AAs2vZQSYqumueBO8piKQ/+8ddWAMvdgAP7oZlSYLE8NE/R41rqhlIXWxpHgSleM9QJ55mZHumypLL3g1uY/0c7pNVa+AYUU+yKvYfchlglpJehL+yp8NTYIgb+toaioJPdTOXw3bgAlXPVOE2cPjPumDYkBrQdlHcr7Glwlh8wTgnce0wi/iUSM3tQIG3XOh9W3yDWBAAAA"
     },
     {
       "index": 4,
@@ -44,8 +45,8 @@
       "height": 1685,
       "largeWidth": 1787,
       "largeHeight": 2527,
-      "alt": "Afang Soup - menu page 4 of 11",
-      "placeholder": "data:image/webp;base64,UklGRsAAAABXRUJQVlA4ILQAAABwBgCdASoUABwAPt1gqE4opaOiMBgIARAbiWQAuzlA3AkgOL/AvIZv2qPeGXJpUE5Ai8tAv8sunVU90aAA/u458gpq78ESm/3cHDUhuixbdDVZqQ8XgqTRA0DdxRScZFPAJ1OfWg138LFDXRKjLimkUJqBZgu0XW8rjr0fGkOL4gXQeqbb7rJx4rE1DpR0Oehrsf4xEHHppnWhKb/Phvqgo3l+XT5itLTmclOejdsXBsv+AAA="
+      "alt": "Afang Soup - menu page 4 of 12",
+      "placeholder": "data:image/webp;base64,UklGRr4AAABXRUJQVlA4ILIAAABwBgCdASoUABwAPt1iqE4opaOiMBgIARAbiWQAuzlA3AkgOL/AvBDs7J33W+NWczZ7/jbJB7l3S05WmwAA/uuK6/mmH0zRc9SgX9ZHsfeZkQlYtO6eQuRfWS6H00Lixf3kdpg2n92n2A2NTr1zXTi/RuY/n5livKjw3sJP6ZAQvxb+iIpoxwZc0T/yzCwuKcXqUvrP9fJA4U2sZaZc1FRWtwhkAbq2mnRiJ+SyY48XtvAA"
     },
     {
       "index": 5,
@@ -55,8 +56,8 @@
       "height": 1685,
       "largeWidth": 1787,
       "largeHeight": 2527,
-      "alt": "Moi Moi - menu page 5 of 11",
-      "placeholder": "data:image/webp;base64,UklGRrIAAABXRUJQVlA4IKYAAACQBQCdASoUABwAPtlaoEyoJSMiMAwBABsJQBbc/5BgBR7aPucTaGcK5Wnaq1uc1kwht4T/MAD+6zGgZxTZwrpGICReYtxprDzb4QAoezbSu2zVgiWm6Z20G3cCX140J6FVkOWLTmxRuiNCMcFDa72hp9g19OZbG3P6WkxFQpdogwAEJ/+1+tYqWd2aAqglyN+Ki2lEiHj4nQ8vMVllopuYVg9nMAAA"
+      "alt": "Seafood Okra - menu page 5 of 12",
+      "placeholder": "data:image/webp;base64,UklGRroAAABXRUJQVlA4IK4AAACwBgCdASoUABwAPt1epEyopSOiMBgMARAbiWgAuzlA3EIgX//dat/8C8EO/TMiv4m/KH+VnKGXmfU+WVLyAAD+7jnwxorleLpjfHcT7M1HnTLEWoS2IDcFZ5Z5sElR9oAQ9qdAOb8eYK8aTPdjbF9Vk8CWm5qUZfB2Bt/t7QLNzPPL+BvaLXXjAwoOj8kGlMi2cvX3dAVUo6hyqXgD7LmRWpVijz6FCOX3xBVwaAA="
     },
     {
       "index": 6,
@@ -66,8 +67,8 @@
       "height": 1685,
       "largeWidth": 1787,
       "largeHeight": 2527,
-      "alt": "Porridge Beans - menu page 6 of 11",
-      "placeholder": "data:image/webp;base64,UklGRr4AAABXRUJQVlA4ILIAAABQBgCdASoUABwAPt1gqU2opaQiKA1REBuJYgCxC/77/fVef/A+SCQfJ0naG83AQs69e3XZ5fJDsplvAAD+8m/jyn44wO+CfwPJ1N3q0SypsCrMZC3pYQcc92X8nIfMWGJ0AO+Ow1yV0r3JqnnftUnu2alqJ8smHM1G3SBLkwi/ALqKFxJqpt63AWLOXd+nd4OwfXl+j6hVs+soUg6BerswfMW8v7JdpRE84+wAnN6EAAAA"
+      "alt": "Moi Moi - menu page 6 of 12",
+      "placeholder": "data:image/webp;base64,UklGRrQAAABXRUJQVlA4IKgAAACQBQCdASoUABwAPtlaoUyoJSMiMAwBABsJQBbdCChgBUnktlx1uAmF77M/AKWDYFCuPL6QAAD+6GZUmFxLNH3UtMj4d4IGwsBIKZOEX4656Os9yfj74gEOjD8FtsEd/aiNp8BQk+XQHHj6ZQqG2btXsZ/w46A2MYe4BlB9XVb2d0+aYisiit+p5j+WBfTwb9xL22y6jgnjJ1R2dihXlqZMCM6A1jldEAA="
     },
     {
       "index": 7,
@@ -77,8 +78,8 @@
       "height": 1685,
       "largeWidth": 1787,
       "largeHeight": 2527,
-      "alt": "Assorted Stew - menu page 7 of 11",
-      "placeholder": "data:image/webp;base64,UklGRsYAAABXRUJQVlA4ILoAAACwBgCdASoUABwAPt1cpEyopSMiMBgMARAbiWIAuyAafA//+4bb/4F4IeJzuvCUMcxScF86VL6JJlZkDjOZAAD+8Is/GYOMEdm6iKZrgtmNyRc5tX5AP825y9wh70nvlgr7bzgNfa9ewBzx57/r1incEdZ2DYGNcfV0qgRsZNHZpIb2lsUy/B2a+AaPxvv56X7ClFgiFhBti5JHt8LHjIHvhodpa6DP6erPDwNLPBqjTePuDB5QB+qAAAA="
+      "alt": "Porridge Beans - menu page 7 of 12",
+      "placeholder": "data:image/webp;base64,UklGRrwAAABXRUJQVlA4ILAAAABwBgCdASoUABwAPt1Yp0yopKOiMBgMARAbiWIAsQwwe/32Dn/wLwQ8TerzbHZIxzaDo/ojlmWYPQbRWDAA/vCLP6oKDIP976zM783PlR7PiGhCDE1azefLrsGUlSAw8USRgU3OxPb9eHq1pN1ylrL3lNV592jGt/55U6cGIaCk2u0zdMxOoB5fLTboxwksuQbXVGDWgZSaQbaE8NHTOf/8QN5rXW5E2XHkdntp4IAAAA=="
     },
     {
       "index": 8,
@@ -88,8 +89,8 @@
       "height": 1685,
       "largeWidth": 1787,
       "largeHeight": 2527,
-      "alt": "Fried Fish - menu page 8 of 11",
-      "placeholder": "data:image/webp;base64,UklGRrIAAABXRUJQVlA4IKYAAADwBQCdASoUABwAPt1ep0yopSOiMAgBEBuJYgC7INqyhb/4DxMku0fbrh/FPfY+zrBnm/+uFe5wAAD+5+vRePyYp0ytQ3p68ZuWOBe0NjLpzylXOXXHPo8eO7paZFP9MjJFNGgznZOmGs2dkZUO2CUfaQO657LWYYKF+J3GP6cn7QuvNdXz4DKNu4FM+On+9hPZLb5OKZZfYVLMTLcuDE7/U+coiAAA"
+      "alt": "Assorted Stew - menu page 8 of 12",
+      "placeholder": "data:image/webp;base64,UklGRsIAAABXRUJQVlA4ILYAAACQBgCdASoUABwAPt1epEyopSMiMBgMARAbiWIAt9gSPA//+4bb/4F4IeJlc0T7L7ssNUdy6Ll8Hp8KqFCgAP7uOfDGjaACXx4U5aqD7b0BRb9TlGmnn2WRNc/hjvwSWoeVOtSg1ulHtzWBt1phBkTvKHziF2zuiuLgpkoGn4XU16ZfgYgW9dW2WJ4gWMvK15I6EwsaEmBhYr91Zk/Bqsh+OX7PWR++zrIksWDCGtbmY6Bq/sAAAA=="
     },
     {
       "index": 9,
@@ -99,8 +100,8 @@
       "height": 1685,
       "largeWidth": 1787,
       "largeHeight": 2527,
-      "alt": "Samosa - menu page 9 of 11",
-      "placeholder": "data:image/webp;base64,UklGRr4AAABXRUJQVlA4ILIAAACwBgCdASoUABwAPt1irE8opaSiKAqpEBuJZAC7IHJ8D//7gFvtgXkh48ZeDDDxrb3aXu7T3L6ppdbaCILYAAD+8Is/qgoL0+juCsEnMnuJOM1xLy2IT/ClkJOsdd8WOPJXsrSC6RBhk1LjuWiHG95ERdtvqjFTBcMtfLDtxJD98CSjsW3J5gAIPTLBah88dtNdU2D8YX5nxO3+T5kZbwIqOjoC+A0bVuN09fj7wBG+7NAA"
+      "alt": "Fried Fish - menu page 9 of 12",
+      "placeholder": "data:image/webp;base64,UklGRrQAAABXRUJQVlA4IKgAAADwBQCdASoUABwAPt1epkyopSOiMAgBEBuJYgC7INqyhb/4DxMkrGv8xp0qZaF8es528vNtDTMOAAD+6GZUmFxEH8d6L4GfM0ft7Zx1iN2yYTu0N35OVAickXG5nzzgEfykxFBHe2Khs6WljKBJQJ/Fq7s0XQBr4/YTPq3PZ6n5f0ftQq4KK+pl4zI+mIz46mkfID8D2S/FwWDyfDqKkBb5XPS/QXQwAAA="
     },
     {
       "index": 10,
@@ -110,8 +111,8 @@
       "height": 1685,
       "largeWidth": 1787,
       "largeHeight": 2527,
-      "alt": "Bole And Fish - menu page 10 of 11",
-      "placeholder": "data:image/webp;base64,UklGRrgAAABXRUJQVlA4IKwAAABQBgCdASoUABwAPt1ep00opSOiMAgBEBuJYgC+cIGiCf/9YAAtKg/C69pt9mswmOwfrM8KcTeD2UntOAD+5+vReRCWoiXdQEN772LbpMBK+ImA0SRD4xJk9PgSUPuxB4mHZzyIZ1sVU+7HtvvXb8+neyAnGTqvSNy47Uo1W93HuKsnitLR1CWE6/dFpfAZzl90RGxDf3Wf1JGGbedxovlBfpPB3N1TqKbtAAAA"
+      "alt": "Samosa - menu page 10 of 12",
+      "placeholder": "data:image/webp;base64,UklGRsAAAABXRUJQVlA4ILQAAADwBgCdASoUABwAPt1aqE6opKOiMBgIARAbiWQAtuhOvA//+4Bb/4F3mymd8d9F/QN5ZK2K1W0LgFEky3O9+ofAAP7wiz8ZhN5iohHdFhfQNQ5O4NcRKzaWLoPQZpvPRctjZF9nLCoQd0fVDxm/4VeJxJ15hxw7JXMFJ8SZDTNTyp9xpe+wRd29jfkgDVSwu1uxADYi2M8qmoCKUD7ZwYQnOFUeebwg9q4lhE/DeJgIipgHWAA="
     },
     {
       "index": 11,
@@ -121,8 +122,19 @@
       "height": 1685,
       "largeWidth": 1787,
       "largeHeight": 2527,
-      "alt": "Fresh Fish - menu page 11 of 11",
-      "placeholder": "data:image/webp;base64,UklGRpAAAABXRUJQVlA4IIQAAADwBACdASoUABwAPtVWo0yoJKMiMAwBABqJQBifFThgbJJdQYv2Ay/2TL4ZjKfMAAAA/uuK59BDBFNf7SvtmMiBqQVA2VmsdZVQL0xKVwWo67isCWKR0haKlcMDbaCpe2DKVBRr5G5kxr0chuOTuQFM86uYJaExNBMWXxUI7cEddRAAAAA="
+      "alt": "Bole And Fish - menu page 11 of 12",
+      "placeholder": "data:image/webp;base64,UklGRr4AAABXRUJQVlA4ILIAAABwBgCdASoUABwAPt1ep00opSOiMAgBEBuJYgC+cIGiCf/9YAAtKg/C65EwjFE08ybCZCZHszSVeQ8vgAAA/uhmVJhcSzR92p5co8ouzv4UOst70H9eero7EUNc+7p8CEMnCkYEH5Vsak7115bKaywV433rt+fTvZATjJ1XpG5cdqUaq/ipvXcdrjdmZzP1wCgFRJC9rxGY5Vzyon9hURGeh7bF4fDCWe6Yz8y0sLJRxyAA"
+    },
+    {
+      "index": 12,
+      "small": "assets/pages/page-12.sm.webp",
+      "large": "assets/pages/page-12.lg.webp",
+      "width": 1191,
+      "height": 1685,
+      "largeWidth": 1787,
+      "largeHeight": 2527,
+      "alt": "Fresh Fish - menu page 12 of 12",
+      "placeholder": "data:image/webp;base64,UklGRqgAAABXRUJQVlA4IJwAAABwBgCdASoUABwAPt1kp02opaOiMBgIARAbiUAYIqgbiEQL/9boA0b/EvhaCkLkWGHuQaM0WgUhzaMxnPAA/uuK6/mMhJeyipHWiAfaDleBXOUrNn6jyLH8FjLVrqn81o7NcgmaYFdG6TkGpqZZU3qsw846lUVPqaHnkkpjULXyb3wIR+g+kX6V6wePUAy8r8Ce+ewnYUfmG204AAA="
     }
   ]
 }
